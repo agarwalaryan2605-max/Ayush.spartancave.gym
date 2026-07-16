@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Spartan Cave - Premium Gym Membership. Forge your strength with our world-class facilities and training programs.">
+  <meta name="keywords" content="gym, fitness, membership, spartan cave, strength training">
+  <meta name="author" content="Spartan Cave">
+  <meta name="theme-color" content="#000000">
+  <meta property="og:title" content="Spartan Cave - Forge Your Strength">
+  <meta property="og:description" content="Premium gym membership management. Join the elite.">
+  <meta property="og:type" content="website">
+  <title>Spartan Cave - Forge Your Strength</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="landing-page" id="landingPage">
+    <!-- Spartan Cave Logo -->
+    <h1 class="landing-logo" id="landingLogo">SPARTAN CAVE</h1>
+    <p class="landing-tagline" id="landingTagline">FORGE YOUR STRENGTH</p>
+
+    <!-- QR Code Section -->
+    <div class="landing-qr-container" id="landingQrContainer">
+      <img id="registrationQrCode" src="" alt="Registration QR Code" style="display:none;">
+      <div id="qrPlaceholder" style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:var(--radius);background:rgba(255,255,255,0.03);">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+    <p class="landing-qr-text" id="scanText">Scan to Register</p>
+
+    <!-- Action Buttons -->
+    <div class="landing-actions" id="landingActions">
+      <a href="register.html" class="btn btn-primary" id="registerBtn">
+        <i data-lucide="user-plus" style="width:18px;height:18px;"></i>
+        Register Now
+      </a>
+      <a href="renew.html" class="btn btn-outline" id="renewBtn">
+        <i data-lucide="refresh-cw" style="width:18px;height:18px;"></i>
+        Renew Membership
+      </a>
+      <a href="login.html" class="admin-link" id="adminLoginLink">
+        <i data-lucide="shield" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>
+        Admin Login
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <footer class="landing-footer" id="landingFooter">
+      &copy; 2026 Spartan Cave | <a href="https://spartancave.in" target="_blank" rel="noopener">spartancave.in</a>
+    </footer>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      fetchRegistrationQR();
+    });
+
+    async function fetchRegistrationQR() {
+      const qrImg = document.getElementById('registrationQrCode');
+      const placeholder = document.getElementById('qrPlaceholder');
+      try {
+        const response = await fetch('/api/export/qrcode');
+        if (response.ok) {
+          const data = await response.json();
+          qrImg.src = data.qrDataUrl;
+          qrImg.style.display = 'block';
+          placeholder.style.display = 'none';
+        } else {
+          showQRFallback();
+        }
+      } catch (err) {
+        showQRFallback();
+      }
+    }
+
+    function showQRFallback() {
+      const placeholder = document.getElementById('qrPlaceholder');
+      placeholder.innerHTML = `
+        <div style="text-align:center;color:var(--text-dim);font-size:0.8rem;">
+          <i data-lucide="qr-code" style="width:40px;height:40px;margin-bottom:8px;opacity:0.3;"></i>
+          <p>QR unavailable</p>
+        </div>
+      `;
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

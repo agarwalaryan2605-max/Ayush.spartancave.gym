@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Spartan Cave Admin Login - Manage your gym members and memberships.">
+  <meta name="theme-color" content="#000000">
+  <title>Admin Login - Spartan Cave</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="login-page" id="loginPage">
+    <div class="login-container animate-fadeInScale" id="loginContainer">
+      <h1 class="logo-text" id="loginLogo">SPARTAN CAVE</h1>
+      <p class="login-subtitle" id="loginSubtitle">Admin Login</p>
+
+      <!-- Error Message -->
+      <div class="login-error" id="loginError">
+        <i data-lucide="alert-circle" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:6px;"></i>
+        <span id="loginErrorText">Invalid credentials</span>
+      </div>
+
+      <!-- Login Form -->
+      <form class="login-form" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" class="form-input" id="username" name="username" placeholder="Enter username" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-wrapper">
+            <input type="password" class="form-input" id="password" name="password" placeholder="Enter password" required autocomplete="current-password">
+            <button type="button" class="password-toggle" id="passwordToggle" onclick="togglePassword()">
+              <i data-lucide="eye" id="eyeIcon" style="width:20px;height:20px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="loginBtn" style="width:100%;margin-top:8px;">
+          <i data-lucide="log-in" style="width:18px;height:18px;"></i>
+          Login
+        </button>
+      </form>
+
+      <div class="login-footer" id="loginFooter">
+        <a href="index.html" id="backHomeLink">
+          <i data-lucide="arrow-left" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>
+          Back to Home
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Spartan Cave - Renew your gym membership. Keep your fitness journey going.">
+  <meta name="theme-color" content="#000000">
+  <title>Renew Membership - Spartan Cave</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="register-page" id="renewPage">
+    <!-- Header -->
+    <header class="register-header" id="renewHeader">
+      <a href="index.html" class="register-logo" id="renewLogo">SPARTAN CAVE</a>
+      <span class="register-subtitle" id="renewSubtitle">Renew Membership</span>
+    </header>
+
+    <!-- Progress Stepper -->
+    <div class="progress-stepper" id="progressStepper">
+      <div class="stepper-step">
+        <div class="stepper-circle active" id="stepCircle1">1<span class="stepper-label">Lookup</span></div>
+        <div class="stepper-line" id="stepLine1"></div>
+      </div>
+      <div class="stepper-step">
+        <div class="stepper-circle" id="stepCircle2">2<span class="stepper-label">Plan</span></div>
+        <div class="stepper-line" id="stepLine2"></div>
+      </div>
+      <div class="stepper-step">
+        <div class="stepper-circle" id="stepCircle3">3<span class="stepper-label">Payment</span></div>
+      </div>
+    </div>
+
+    <!-- Step 1: Phone Lookup -->
+    <div class="form-step active" id="step1">
+      <div class="form-card">
+        <h2 class="form-card-title" id="step1Title">
+          <i data-lucide="search" style="width:22px;height:22px;"></i>
+          Find Your Membership
+        </h2>
+        <p class="form-card-desc" id="step1Desc">Enter your registered phone number to continue</p>
+
+        <div class="form-group">
+          <label for="lookupPhone">Phone Number</label>
+          <input type="tel" class="form-input" id="lookupPhone" placeholder="Enter 10-digit phone number" maxlength="10" inputmode="numeric" pattern="[0-9]*">
+          <div class="field-error" id="phoneError">Please enter a valid 10-digit phone number</div>
+        </div>
+
+        <!-- Member Info (shown after lookup) -->
+        <div id="memberInfoCard" style="display:none;">
+          <div style="border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:16px 0;background:rgba(255,255,255,0.02);">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+              <div style="width:44px;height:44px;border-radius:50%;border:2px solid var(--text-primary);display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="user" style="width:22px;height:22px;"></i>
+              </div>
+              <div>
+                <div id="memberName" style="font-weight:700;font-size:1.1rem;"></div>
+                <div id="memberMemberId" style="font-family:monospace;font-size:0.82rem;color:var(--text-muted);"></div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.85rem;">
+              <div>
+                <span style="color:var(--text-muted);">Current Plan</span>
+                <div id="memberPlan" style="font-weight:600;margin-top:2px;"></div>
+              </div>
+              <div>
+                <span style="color:var(--text-muted);">Amount Paid</span>
+                <div id="memberAmount" style="font-weight:600;margin-top:2px;"></div>
+              </div>
+              <div>
+                <span style="color:var(--text-muted);">Status</span>
+                <div id="memberStatus" style="margin-top:2px;"></div>
+              </div>
+              <div>
+                <span style="color:var(--text-muted);">Valid Until</span>
+                <div id="memberEndDate" style="font-weight:600;margin-top:2px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <a href="index.html" class="btn btn-outline" id="backToHomeBtn">
+            <i data-lucide="arrow-left" style="width:18px;height:18px;"></i>
+            Home
+          </a>
+          <button class="btn btn-primary" id="lookupBtn" onclick="lookupMember()">
+            <i data-lucide="search" style="width:18px;height:18px;"></i>
+            Find Membership
+          </button>
+          <button class="btn btn-primary" id="continueToStep2Btn" onclick="goToStep(2)" style="display:none;">
+            <i data-lucide="arrow-right" style="width:18px;height:18px;"></i>
+            Continue to Renew
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Plan Selection -->
+    <div class="form-step" id="step2">
+      <div class="form-card">
+        <h2 class="form-card-title" id="step2Title">
+          <i data-lucide="crown" style="width:22px;height:22px;"></i>
+          Select New Plan
+        </h2>
+        <p class="form-card-desc" id="step2Desc">Choose a membership plan to renew</p>
+
+        <div class="plans-grid" id="plansGrid">
+          <div class="plan-card" data-plan="Monthly" data-amount="1099" data-days="30" onclick="selectPlan(this)">
+            <div class="plan-card-header">
+              <span class="plan-name">Monthly</span>
+              <span class="plan-duration">30 days</span>
+            </div>
+            <div class="plan-price">₹1,099</div>
+            <div class="plan-perday">₹37/day</div>
+          </div>
+          <div class="plan-card" data-plan="Quarterly" data-amount="2999" data-days="90" onclick="selectPlan(this)">
+            <div class="plan-card-header">
+              <span class="plan-name">Quarterly</span>
+              <span class="plan-duration">90 days</span>
+            </div>
+            <div class="plan-price">₹2,999</div>
+            <div class="plan-perday">₹33/day</div>
+          </div>
+          <div class="plan-card" data-plan="Half-yearly" data-amount="5499" data-days="180" onclick="selectPlan(this)">
+            <div class="plan-card-header">
+              <span class="plan-name">Half-yearly</span>
+              <span class="plan-duration">180 days</span>
+            </div>
+            <div class="plan-price">₹5,499</div>
+            <div class="plan-perday">₹31/day</div>
+          </div>
+          <div class="plan-card" data-plan="Yearly" data-amount="10999" data-days="365" onclick="selectPlan(this)">
+            <div class="plan-card-header">
+              <span class="plan-name">Yearly</span>
+              <span class="plan-duration">365 days</span>
+            </div>
+            <div class="plan-price">₹10,999</div>
+            <div class="plan-perday">₹30/day</div>
+            <div class="plan-badge">Best Value</div>
+          </div>
+        </div>
+        <div class="field-error" id="planError">Please select a plan</div>
+
+        <div class="form-actions">
+          <button class="btn btn-outline" onclick="goToStep(1)">
+            <i data-lucide="arrow-left" style="width:18px;height:18px;"></i>
+            Back
+          </button>
+          <button class="btn btn-primary" onclick="goToStep(3)">
+            Next
+            <i data-lucide="arrow-right" style="width:18px;height:18px;"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Payment -->
+    <div class="form-step" id="step3">
+      <div class="form-card">
+        <h2 class="form-card-title" id="step3Title">
+          <i data-lucide="wallet" style="width:22px;height:22px;"></i>
+          Payment
+        </h2>
+        <p class="form-card-desc" id="step3Desc">Choose your payment method</p>
+
+        <!-- Payment Toggle -->
+        <div class="payment-toggle" id="paymentToggle">
+          <button class="payment-toggle-btn active" id="cashToggleBtn" onclick="setPaymentMode('Cash')">
+            <i data-lucide="banknote" style="width:18px;height:18px;"></i>
+            Cash
+          </button>
+          <button class="payment-toggle-btn" id="onlineToggleBtn" onclick="setPaymentMode('Online')">
+            <i data-lucide="smartphone" style="width:18px;height:18px;"></i>
+            Online
+          </button>
+        </div>
+
+        <!-- Cash Section -->
+        <div id="cashSection" style="display:block;">
+          <div style="text-align:center;padding:30px 0;">
+            <div style="font-size:2.2rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:8px;" id="cashAmount">₹0</div>
+            <p style="color:var(--text-muted);font-size:0.85rem;">Pay this amount at the reception counter</p>
+          </div>
+        </div>
+
+        <!-- Online Section -->
+        <div id="onlineSection" style="display:none;">
+          <div style="text-align:center;padding:20px 0;">
+            <div style="font-size:1.8rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:4px;" id="onlineAmount">₹0</div>
+            <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:16px;">Scan QR code to pay via UPI</p>
+
+            <!-- UPI QR -->
+            <div style="margin:0 auto 16px;width:200px;height:200px;position:relative;">
+              <div id="upiQrPlaceholder" style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:var(--radius);background:rgba(255,255,255,0.03);">
+                <div class="loading-spinner"></div>
+              </div>
+              <img id="upiQrImage" src="" alt="UPI QR" style="display:none;width:200px;height:200px;border-radius:var(--radius);border:1px solid var(--border);background:#fff;padding:12px;">
+            </div>
+
+            <p style="font-family:monospace;font-size:0.82rem;color:var(--text-muted);margin-bottom:20px;">UPI: ayushmittal288@okaxis</p>
+
+            <!-- Screenshot Upload -->
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('screenshotInput').click()">
+              <input type="file" id="screenshotInput" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
+              <i data-lucide="upload-cloud" style="width:32px;height:32px;opacity:0.4;margin-bottom:8px;"></i>
+              <p id="uploadText" style="font-size:0.85rem;">Upload Payment Screenshot</p>
+              <p id="uploadSubtext" style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Click to browse (Max 5MB)</p>
+            </div>
+
+            <!-- Preview -->
+            <div id="uploadPreview" style="display:none;margin-top:16px;">
+              <img id="screenshotPreview" src="" alt="Preview" style="max-width:200px;border-radius:var(--radius);border:1px solid var(--border);">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-outline" onclick="goToStep(2)">
+            <i data-lucide="arrow-left" style="width:18px;height:18px;"></i>
+            Back
+          </button>
+          <button class="btn btn-primary" id="submitBtn" onclick="submitRenewal()">
+            <i data-lucide="check" style="width:18px;height:18px;"></i>
+            Renew Membership
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Success -->
+    <div class="form-step" id="step4">
+      <div class="form-card" style="text-align:center;">
+        <div style="width:64px;height:64px;border-radius:50%;border:2px solid var(--text-primary);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+          <i data-lucide="check" style="width:32px;height:32px;"></i>
+        </div>
+        <h2 class="form-card-title" style="justify-content:center;" id="step4Title">Membership Renewed!</h2>
+        <p class="form-card-desc" style="text-align:center;" id="step4Desc">Your membership has been renewed successfully</p>
+
+        <div style="border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:24px 0;text-align:left;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:0.85rem;">
+            <div><span style="color:var(--text-muted);">Member ID</span><div id="successMemberId" style="font-family:monospace;font-weight:600;margin-top:2px;"></div></div>
+            <div><span style="color:var(--text-muted);">Name</span><div id="successName" style="font-weight:600;margin-top:2px;"></div></div>
+            <div><span style="color:var(--text-muted);">Plan</span><div id="successPlan" style="font-weight:600;margin-top:2px;"></div></div>
+            <div><span style="color:var(--text-muted);">Amount</span><div id="successAmount" style="font-weight:600;margin-top:2px;"></div></div>
+            <div><span style="color:var(--text-muted);">Payment</span><div id="successPayment" style="font-weight:600;margin-top:2px;"></div></div>
+            <div><span style="color:var(--text-muted);">Renewed On</span><div id="successRegDate" style="font-weight:600;margin-top:2px;"></div></div>
+            <div style="grid-column:span 2;"><span style="color:var(--text-muted);">Valid Until</span><div id="successValidUntil" style="font-weight:600;font-size:1.1rem;margin-top:2px;"></div></div>
+          </div>
+        </div>
+
+        <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:20px;">
+          <i data-lucide="info" style="width:14px;height:14px;display:inline;vertical-align:middle;margin-right:4px;"></i>
+          Show this screen to the receptionist
+        </p>
+
+        <a href="index.html" class="btn btn-primary">
+          <i data-lucide="home" style="width:18px;height:18px;"></i>
+          Back to Home
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="js/renew.js"></script>
+</body>
+</html>
