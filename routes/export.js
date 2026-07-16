@@ -2,8 +2,23 @@ import { Router } from 'express';
 import ExcelJS from 'exceljs';
 import QRCode from 'qrcode';
 import db from '../database/db.js';
+import os from 'os';
 
 const router = Router();
+
+// Helper to get local network IP address
+function getLocalIpAddress() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      // Find non-internal IPv4 address
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+}
 
 // ── GET /api/export/excel — Export all members to Excel ─────────────────────────
 
@@ -92,7 +107,11 @@ router.get('/excel', async (req, res) => {
 
 router.get('/qrcode', async (req, res) => {
   try {
-    const baseUrl = req.query.baseUrl || 'http://localhost:3000/register.html';
+    const localIp = getLocalIpAddress();
+    const port = process.env.PORT || 3000;
+    const defaultUrl = `http://${localIp}:${port}/register.html`;
+    const baseUrl = req.query.baseUrl || defaultUrl;
+
     const qrDataUrl = await QRCode.toDataURL(baseUrl, {
       width: 300,
       margin: 2,
