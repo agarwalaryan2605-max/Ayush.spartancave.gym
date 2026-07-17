@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import db, { todayDate } from '../database/db.js';
 
@@ -108,7 +109,17 @@ router.post('/upload-screenshot', upload.single('screenshot'), (req, res) => {
     }
 
     const { memberId } = req.body;
-    const filePath = `/uploads/${req.file.filename}`;
+    
+    // Read the uploaded file and convert to Base64
+    const fileBuffer = fs.readFileSync(req.file.path);
+    const base64Data = `data:${req.file.mimetype};base64,${fileBuffer.toString('base64')}`;
+
+    // Clean up file from local disk to save space/stateless compatibility
+    try {
+      fs.unlinkSync(req.file.path);
+    } catch (unlinkErr) {
+      console.warn('Temporary file cleanup failed:', unlinkErr.message);
+    }
 
     // If memberId provided, link screenshot to member
     if (memberId) {
@@ -117,10 +128,10 @@ router.post('/upload-screenshot', upload.single('screenshot'), (req, res) => {
         return res.status(404).json({ error: 'Member not found' });
       }
 
-      db.prepare('UPDATE members SET payment_screenshot = ? WHERE member_id = ?').run(filePath, memberId);
+      db.prepare('UPDATE members SET payment_screenshot = ? WHERE member_id = ?').run(base64Data, memberId);
     }
 
-    res.json({ message: 'Screenshot uploaded successfully', filePath });
+    res.json({ message: 'Screenshot uploaded successfully', filePath: base64Data });
   } catch (err) {
     console.error('Error uploading screenshot:', err.message);
     res.status(500).json({ error: 'Failed to upload screenshot' });

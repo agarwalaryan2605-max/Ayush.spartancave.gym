@@ -3,11 +3,24 @@ import bcrypt from 'bcryptjs';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import pg from 'pg';
 
+const { Pool } = pg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const dbPath = path.join(__dirname, 'spartan_cave.db');
+
+// ── Initialize pg pool if DATABASE_URL is defined ─────────────────────────────
+let pool;
+if (process.env.DATABASE_URL) {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+}
 
 // ── Initialize sql.js and create/load database ────────────────────────────────
 
@@ -59,13 +72,24 @@ const dbWrapper = {
 };
 
 /**
- * Save database to disk
+ * Save database to disk and sync to cloud if configured
  */
 function saveDatabase() {
   try {
     const data = db.export();
     const buffer = Buffer.from(data);
     fs.writeFileSync(dbPath, buffer);
+
+    if (pool) {
+      const base64 = buffer.toString('base64');
+      pool.query(`
+        INSERT INTO database_sync (id, data, updated_at)
+        VALUES (1, $1, CURRENT_TIMESTAMP)
+        ON CONFLICT (id) DO UPDATE SET data = $1, updated_at = CURRENT_TIMESTAMP
+      `, [base64])
+      .then(() => console.log('☁️  SQLite database synced to PostgreSQL cloud successfully.'))
+      .catch(err => console.error('❌ Cloud database sync failed:', err.message));
+    }
   } catch (err) {
     console.error('Error saving database:', err.message);
   }
@@ -75,6 +99,31 @@ function saveDatabase() {
  * Initialize the database. Must be called before using dbWrapper.
  */
 export async function initDatabase() {
+  if (pool) {
+    console.log('🔄 Cloud Database Sync: Syncing database from PostgreSQL...');
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS database_sync (
+          id INT PRIMARY KEY,
+          data TEXT,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      const res = await pool.query('SELECT data FROM database_sync WHERE id = 1');
+      if (res.rows.length > 0) {
+        const base64Data = res.rows[0].data;
+        const fileBuffer = Buffer.from(base64Data, 'base64');
+        fs.writeFileSync(dbPath, fileBuffer);
+        console.log('📂 SQLite database successfully loaded from PostgreSQL cloud backup!');
+      } else {
+        console.log('🆕 No cloud backup found. Initializing fresh database.');
+      }
+    } catch (syncErr) {
+      console.error('❌ Cloud database synchronization failed:', syncErr.message);
+    }
+  }
+
   const SQL = await initSqlJs();
 
   // Load existing database or create new one
