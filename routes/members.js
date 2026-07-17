@@ -5,6 +5,7 @@ import db, {
   calculateEndDate,
   todayDate,
 } from '../database/db.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -73,7 +74,7 @@ router.post('/', (req, res) => {
 
 // ── GET /api/members/stats — Dashboard statistics ───────────────────────────────
 
-router.get('/stats', (req, res) => {
+router.get('/stats', authMiddleware, (req, res) => {
   try {
     const total = db.prepare('SELECT COUNT(*) AS count FROM members').get().count;
     const active = db.prepare("SELECT COUNT(*) AS count FROM members WHERE status = 'active'").get().count;
@@ -111,7 +112,7 @@ router.get('/stats', (req, res) => {
 
 // ── GET /api/members — List all members (with optional filters) ─────────────────
 
-router.get('/', (req, res) => {
+router.get('/', authMiddleware, (req, res) => {
   try {
     const { search, plan, payment_mode, status } = req.query;
 
@@ -182,7 +183,7 @@ router.get('/lookup', (req, res) => {
 
 // ── GET /api/members/:id — Get single member by member_id ───────────────────────
 
-router.get('/:id', (req, res) => {
+router.get('/:id', authMiddleware, (req, res) => {
   try {
     const member = db.prepare('SELECT * FROM members WHERE member_id = ?').get(req.params.id);
 
@@ -199,7 +200,7 @@ router.get('/:id', (req, res) => {
 
 // ── PUT /api/members/:id — Update member details ────────────────────────────────
 
-router.put('/:id', (req, res) => {
+router.put('/:id', authMiddleware, (req, res) => {
   try {
     const existing = db.prepare('SELECT * FROM members WHERE member_id = ?').get(req.params.id);
     if (!existing) {
@@ -267,7 +268,7 @@ router.put('/:id', (req, res) => {
 
 // ── DELETE /api/members/:id — Delete member ─────────────────────────────────────
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', authMiddleware, (req, res) => {
   try {
     const existing = db.prepare('SELECT * FROM members WHERE member_id = ?').get(req.params.id);
     if (!existing) {

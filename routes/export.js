@@ -3,6 +3,7 @@ import ExcelJS from 'exceljs';
 import QRCode from 'qrcode';
 import db from '../database/db.js';
 import os from 'os';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -22,7 +23,7 @@ function getLocalIpAddress() {
 
 // ── GET /api/export/excel — Export all members to Excel ─────────────────────────
 
-router.get('/excel', async (req, res) => {
+router.get('/excel', authMiddleware, async (req, res) => {
   try {
     const members = db.prepare('SELECT * FROM members ORDER BY id DESC').all();
 
@@ -105,7 +106,7 @@ router.get('/excel', async (req, res) => {
 
 // ── GET /api/export/qrcode — Generate QR code for registration page ─────────────
 
-router.get('/qrcode', async (req, res) => {
+router.get('/qrcode', authMiddleware, async (req, res) => {
   try {
     const localIp = getLocalIpAddress();
     const port = process.env.PORT || 3000;

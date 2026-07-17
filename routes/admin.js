@@ -1,13 +1,9 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
 import db from '../database/db.js';
+import { createToken, verifyToken } from '../middleware/auth.js';
 
 const router = Router();
-
-// ── In-memory session store ─────────────────────────────────────────────────────
-
-const sessions = new Map();
 
 // ── POST /api/admin/login — Admin login ─────────────────────────────────────────
 
@@ -29,8 +25,7 @@ router.post('/login', (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    const token = uuidv4();
-    sessions.set(token, { username: admin.username, createdAt: new Date().toISOString() });
+    const token = createToken(admin.username);
 
     res.json({ message: 'Login successful', token, username: admin.username });
   } catch (err) {
@@ -51,12 +46,12 @@ router.get('/verify', (req, res) => {
     // Support both "Bearer <token>" and plain "<token>"
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
 
-    if (!sessions.has(token)) {
+    const decoded = verifyToken(token);
+    if (!decoded) {
       return res.status(401).json({ error: 'Invalid or expired token', valid: false });
     }
 
-    const session = sessions.get(token);
-    res.json({ valid: true, username: session.username });
+    res.json({ valid: true, username: decoded.username });
   } catch (err) {
     console.error('Error verifying token:', err.message);
     res.status(500).json({ error: 'Verification failed', valid: false });
@@ -66,23 +61,8 @@ router.get('/verify', (req, res) => {
 // ── POST /api/admin/logout — Invalidate token ──────────────────────────────────
 
 router.post('/logout', (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(400).json({ error: 'No authorization token provided' });
-    }
-
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-
-    if (sessions.has(token)) {
-      sessions.delete(token);
-    }
-
-    res.json({ message: 'Logged out successfully' });
-  } catch (err) {
-    console.error('Error during logout:', err.message);
-    res.status(500).json({ error: 'Logout failed' });
-  }
+  // Stateless tokens are invalidated by removing them from client's storage (localStorage)
+  res.json({ message: 'Logged out successfully' });
 });
 
 export default router;

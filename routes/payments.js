@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import db, { todayDate } from '../database/db.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,7 +41,7 @@ const upload = multer({
 
 // ── PUT /api/payments/:memberId — Update payment status ─────────────────────────
 
-router.put('/:memberId', (req, res) => {
+router.put('/:memberId', authMiddleware, (req, res) => {
   try {
     const { memberId } = req.params;
     const { payment_status } = req.body;
@@ -75,7 +76,7 @@ router.put('/:memberId', (req, res) => {
 
 // ── GET /api/payments/summary — Payment summary ─────────────────────────────────
 
-router.get('/summary', (req, res) => {
+router.get('/summary', authMiddleware, (req, res) => {
   try {
     const totalCollected = db.prepare(
       "SELECT COALESCE(SUM(amount), 0) AS total FROM members WHERE payment_status = 'paid'"
