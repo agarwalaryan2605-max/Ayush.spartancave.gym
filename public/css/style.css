@@ -1531,3 +1531,11 @@ select.form-input option {
     grid-template-columns: 1fr;
   }
 }
+
+/* Member Selection Card Hover style */
+.member-select-card:hover {
+  border-color: var(--border-light) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-2px);
+}

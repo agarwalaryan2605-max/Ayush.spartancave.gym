@@ -10,6 +10,7 @@ let selectedDays = 0;
 let paymentMode = 'cash';
 let screenshotFile = null;
 let foundMember = null;
+let lookupResults = [];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -122,14 +123,29 @@ async function lookupMember() {
     const res = await fetch(`/api/members/lookup?phone=${phone}`);
 
     if (res.ok) {
-      foundMember = await res.json();
-      displayMemberInfo(foundMember);
+      lookupResults = await res.json();
+      
+      if (lookupResults.length === 1) {
+        // Only one membership found, select it directly
+        foundMember = lookupResults[0];
+        document.getElementById('memberSelectionSection').style.display = 'none';
+        displayMemberInfo(foundMember);
+      } else {
+        // Multiple memberships found, show list for selection
+        foundMember = null;
+        document.getElementById('memberInfoCard').style.display = 'none';
+        document.getElementById('continueToStep2Btn').style.display = 'none';
+        document.getElementById('memberSelectionSection').style.display = 'block';
+        displayMemberSelectionList(lookupResults);
+      }
     } else {
       const err = await res.json().catch(() => ({}));
       showToast(err.error || 'Member not found. Please register first.', 'error');
       document.getElementById('memberInfoCard').style.display = 'none';
+      document.getElementById('memberSelectionSection').style.display = 'none';
       document.getElementById('continueToStep2Btn').style.display = 'none';
       foundMember = null;
+      lookupResults = [];
     }
   } catch (err) {
     showToast('Network error. Please check your connection.', 'error');
@@ -138,6 +154,49 @@ async function lookupMember() {
   lookupBtn.disabled = false;
   lookupBtn.innerHTML = '<i data-lucide="search" style="width:18px;height:18px;"></i> Find Membership';
   lucide.createIcons();
+}
+
+function displayMemberSelectionList(members) {
+  const container = document.getElementById('memberSelectionList');
+  container.innerHTML = members.map(m => {
+    const isExpired = m.status === 'expired' || m.is_expired;
+    const statusLabel = isExpired ? '⚠️ EXPIRED' : '✅ ACTIVE';
+    const statusColor = isExpired ? '#ff4444' : '#44ff44';
+    return `
+      <div class="member-select-card" 
+           style="border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); transition: all 0.2s;" 
+           onclick="selectMemberToRenew('${m.member_id}')"
+           data-id="${m.member_id}">
+        <div>
+          <div style="font-weight: 700; color: var(--text-primary); font-size: 1.05rem;">${m.full_name}</div>
+          <div style="font-size: 0.78rem; color: var(--text-muted); font-family: monospace; margin-top: 4px;">ID: ${m.member_id}</div>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 0.78rem; font-weight: 700; color: ${statusColor};">${statusLabel}</span>
+          <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">Valid: ${formatDate(m.end_date)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectMemberToRenew(memberId) {
+  const member = lookupResults.find(m => m.member_id === memberId);
+  if (!member) return;
+
+  // Highlight selected card
+  document.querySelectorAll('.member-select-card').forEach(card => {
+    if (card.dataset.id === memberId) {
+      card.style.borderColor = 'var(--text-primary)';
+      card.style.background = 'rgba(255, 255, 255, 0.05)';
+    } else {
+      card.style.borderColor = 'var(--border)';
+      card.style.background = 'rgba(255, 255, 255, 0.02)';
+    }
+  });
+
+  foundMember = member;
+  displayMemberInfo(member);
 }
 
 function displayMemberInfo(member) {
@@ -155,8 +214,7 @@ function displayMemberInfo(member) {
     statusEl.innerHTML = '<span style="color:#44ff44;font-weight:700;">✅ ACTIVE</span>';
   }
 
-  // Show continue button, hide lookup button
-  document.getElementById('lookupBtn').style.display = 'none';
+  // Show continue button
   document.getElementById('continueToStep2Btn').style.display = 'inline-flex';
 
   lucide.createIcons();

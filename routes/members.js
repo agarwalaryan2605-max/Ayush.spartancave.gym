@@ -160,21 +160,24 @@ router.get('/lookup', (req, res) => {
       return res.status(400).json({ error: 'Please provide a valid 10-digit phone number' });
     }
 
-    const member = db.prepare('SELECT * FROM members WHERE phone = ?').get(phone);
-    if (!member) {
+    const members = db.prepare('SELECT * FROM members WHERE phone = ?').all(phone);
+    if (!members || members.length === 0) {
       return res.status(404).json({ error: 'No member found with this phone number' });
     }
 
-    // Check if membership is expired
     const today = todayDate();
-    const isExpired = member.end_date < today;
-    member.is_expired = isExpired;
-    if (isExpired && member.status === 'active') {
-      db.prepare("UPDATE members SET status = 'expired' WHERE member_id = ?").run(member.member_id);
-      member.status = 'expired';
+    
+    // Check and update expiration status for all matching members
+    for (const member of members) {
+      const isExpired = member.end_date < today;
+      member.is_expired = isExpired;
+      if (isExpired && member.status === 'active') {
+        db.prepare("UPDATE members SET status = 'expired' WHERE member_id = ?").run(member.member_id);
+        member.status = 'expired';
+      }
     }
 
-    res.json(member);
+    res.json(members);
   } catch (err) {
     console.error('Error looking up member:', err.message);
     res.status(500).json({ error: 'Failed to look up member' });
