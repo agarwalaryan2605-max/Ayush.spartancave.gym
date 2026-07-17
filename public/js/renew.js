@@ -11,6 +11,7 @@ let paymentMode = 'cash';
 let screenshotFile = null;
 let foundMember = null;
 let lookupResults = [];
+let lookupMode = 'phone'; // Mode can be 'phone' or 'id'
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -101,26 +102,92 @@ function validatePlanSelection() {
 }
 
 /* ============================================
-   Phone Lookup
+   Phone & ID Lookup Modes
    ============================================ */
-async function lookupMember() {
-  const phone = document.getElementById('lookupPhone').value.trim();
+function setLookupMode(mode) {
+  lookupMode = mode;
+  
+  const phoneBtn = document.getElementById('lookupModePhone');
+  const idBtn = document.getElementById('lookupModeId');
+  const label = document.getElementById('lookupInputLabel');
+  const input = document.getElementById('lookupInput');
+  const error = document.getElementById('lookupError');
 
-  if (!phone || !/^[0-9]{10}$/.test(phone)) {
-    document.getElementById('lookupPhone').classList.add('error');
-    document.getElementById('phoneError').classList.add('show');
-    return;
+  // Reset inputs and states
+  input.value = '';
+  input.classList.remove('error');
+  error.classList.remove('show');
+  document.getElementById('memberInfoCard').style.display = 'none';
+  document.getElementById('memberSelectionSection').style.display = 'none';
+  document.getElementById('continueToStep2Btn').style.display = 'none';
+  foundMember = null;
+  lookupResults = [];
+
+  if (mode === 'phone') {
+    phoneBtn.style.borderColor = 'var(--text-primary)';
+    phoneBtn.style.color = 'var(--text-primary)';
+    phoneBtn.style.background = 'rgba(255,255,255,0.03)';
+    
+    idBtn.style.borderColor = 'var(--border)';
+    idBtn.style.color = 'var(--text-muted)';
+    idBtn.style.background = 'rgba(255,255,255,0.01)';
+
+    label.textContent = 'Phone Number';
+    input.placeholder = 'Enter 10-digit phone number';
+    input.maxLength = 10;
+    input.type = 'tel';
+    input.inputMode = 'numeric';
+    input.pattern = '[0-9]*';
+    error.textContent = 'Please enter a valid 10-digit phone number';
+  } else {
+    idBtn.style.borderColor = 'var(--text-primary)';
+    idBtn.style.color = 'var(--text-primary)';
+    idBtn.style.background = 'rgba(255,255,255,0.03)';
+    
+    phoneBtn.style.borderColor = 'var(--border)';
+    phoneBtn.style.color = 'var(--text-muted)';
+    phoneBtn.style.background = 'rgba(255,255,255,0.01)';
+
+    label.textContent = 'Member ID';
+    input.placeholder = 'Enter Member ID (e.g. SC-2026-0001)';
+    input.maxLength = 20;
+    input.type = 'text';
+    input.removeAttribute('inputmode');
+    input.removeAttribute('pattern');
+    error.textContent = 'Please enter a valid Member ID';
+  }
+  lucide.createIcons();
+}
+
+async function lookupMember() {
+  const val = document.getElementById('lookupInput').value.trim();
+  const input = document.getElementById('lookupInput');
+  const error = document.getElementById('lookupError');
+
+  if (lookupMode === 'phone') {
+    if (!val || !/^[0-9]{10}$/.test(val)) {
+      input.classList.add('error');
+      error.classList.add('show');
+      return;
+    }
+  } else {
+    if (!val || val.length < 3) {
+      input.classList.add('error');
+      error.classList.add('show');
+      return;
+    }
   }
 
-  document.getElementById('lookupPhone').classList.remove('error');
-  document.getElementById('phoneError').classList.remove('show');
+  input.classList.remove('error');
+  error.classList.remove('show');
 
   const lookupBtn = document.getElementById('lookupBtn');
   lookupBtn.disabled = true;
   lookupBtn.innerHTML = '<div class="loading-spinner" style="width:18px;height:18px;"></div> Searching...';
 
   try {
-    const res = await fetch(`/api/members/lookup?phone=${phone}`);
+    const queryParam = lookupMode === 'phone' ? `phone=${val}` : `memberId=${val}`;
+    const res = await fetch(`/api/members/lookup?${queryParam}`);
 
     if (res.ok) {
       lookupResults = await res.json();
@@ -140,7 +207,7 @@ async function lookupMember() {
       }
     } else {
       const err = await res.json().catch(() => ({}));
-      showToast(err.error || 'Member not found. Please register first.', 'error');
+      showToast(err.error || 'Membership not found. Please register first.', 'error');
       document.getElementById('memberInfoCard').style.display = 'none';
       document.getElementById('memberSelectionSection').style.display = 'none';
       document.getElementById('continueToStep2Btn').style.display = 'none';
@@ -212,6 +279,23 @@ function displayMemberInfo(member) {
     statusEl.innerHTML = '<span style="color:#ff4444;font-weight:700;">⚠️ EXPIRED</span>';
   } else {
     statusEl.innerHTML = '<span style="color:#44ff44;font-weight:700;">✅ ACTIVE</span>';
+  }
+
+  // Calculate days remaining dynamically
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const endDate = new Date(member.end_date);
+  endDate.setHours(0,0,0,0);
+  const diffTime = endDate - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  const daysLeftEl = document.getElementById('memberDaysLeft');
+  if (diffDays > 0) {
+    daysLeftEl.innerHTML = `<span style="color:#38bdf8;font-weight:700;">🔥 ${diffDays} Days Remaining</span>`;
+  } else if (diffDays === 0) {
+    daysLeftEl.innerHTML = `<span style="color:#fbbf24;font-weight:700;">⚠️ Last Day Today!</span>`;
+  } else {
+    daysLeftEl.innerHTML = `<span style="color:#f87171;font-weight:700;">❌ Expired ${Math.abs(diffDays)} days ago</span>`;
   }
 
   // Show continue button

@@ -40,10 +40,22 @@
         </h2>
         <p class="form-card-desc" id="step1Desc">Enter your registered phone number to continue</p>
 
+        <!-- Lookup Mode Selection -->
+        <div style="display:flex;gap:10px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+          <button type="button" class="btn btn-outline" id="lookupModePhone" style="flex:1;padding:8px 12px;font-size:0.8rem;background:rgba(255,255,255,0.03);border-color:var(--text-primary);color:var(--text-primary);" onclick="setLookupMode('phone')">
+            <i data-lucide="phone" style="width:14px;height:14px;margin-right:6px;vertical-align:middle;display:inline-block;"></i>
+            Phone Number
+          </button>
+          <button type="button" class="btn btn-outline" id="lookupModeId" style="flex:1;padding:8px 12px;font-size:0.8rem;background:rgba(255,255,255,0.01);border-color:var(--border);" onclick="setLookupMode('id')">
+            <i data-lucide="hash" style="width:14px;height:14px;margin-right:6px;vertical-align:middle;display:inline-block;"></i>
+            Member ID
+          </button>
+        </div>
+
         <div class="form-group">
-          <label for="lookupPhone">Phone Number</label>
-          <input type="tel" class="form-input" id="lookupPhone" placeholder="Enter 10-digit phone number" maxlength="10" inputmode="numeric" pattern="[0-9]*">
-          <div class="field-error" id="phoneError">Please enter a valid 10-digit phone number</div>
+          <label id="lookupInputLabel" for="lookupInput">Phone Number</label>
+          <input type="tel" class="form-input" id="lookupInput" placeholder="Enter 10-digit phone number" maxlength="10" inputmode="numeric" pattern="[0-9]*">
+          <div class="field-error" id="lookupError">Please enter a valid 10-digit phone number</div>
         </div>
 
         <!-- Multiple Members Selection List -->
@@ -80,6 +92,10 @@
               <div>
                 <span style="color:var(--text-muted);">Valid Until</span>
                 <div id="memberEndDate" style="font-weight:600;margin-top:2px;"></div>
+              </div>
+              <div style="grid-column: span 2; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;">
+                <span style="color:var(--text-muted);">Days Remaining / Expiry Duration</span>
+                <div id="memberDaysLeft" style="font-weight:700;margin-top:2px;font-size:1.05rem;"></div>
               </div>
             </div>
           </div>

@@ -150,19 +150,32 @@ router.get('/', authMiddleware, (req, res) => {
   }
 });
 
-// ── GET /api/members/lookup — Find member by phone number ───────────────────────
+// ── GET /api/members/lookup — Find member by phone number or Member ID ─────────
 
 router.get('/lookup', (req, res) => {
   try {
-    const { phone } = req.query;
+    const { phone, memberId } = req.query;
 
-    if (!phone || !/^[0-9]{10}$/.test(phone)) {
-      return res.status(400).json({ error: 'Please provide a valid 10-digit phone number' });
+    if (!phone && !memberId) {
+      return res.status(400).json({ error: 'Please provide either a phone number or a Member ID' });
     }
 
-    const members = db.prepare('SELECT * FROM members WHERE phone = ?').all(phone);
+    let members = [];
+    if (phone) {
+      if (!/^[0-9]{10}$/.test(phone)) {
+        return res.status(400).json({ error: 'Please provide a valid 10-digit phone number' });
+      }
+      members = db.prepare('SELECT * FROM members WHERE phone = ?').all(phone);
+    } else if (memberId) {
+      const cleanId = memberId.trim().toUpperCase();
+      const member = db.prepare('SELECT * FROM members WHERE UPPER(member_id) = ?').get(cleanId);
+      if (member) {
+        members = [member];
+      }
+    }
+
     if (!members || members.length === 0) {
-      return res.status(404).json({ error: 'No member found with this phone number' });
+      return res.status(404).json({ error: 'No membership found with these details' });
     }
 
     const today = todayDate();
