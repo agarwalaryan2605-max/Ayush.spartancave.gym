@@ -424,6 +424,7 @@ async function submitRenewal() {
   try {
     // Step 1: Renew membership
     const renewData = {
+      member_id: foundMember.member_id,
       phone: foundMember.phone,
       membership_plan: selectedPlan,
       payment_mode: paymentMode,

@@ -303,10 +303,10 @@ router.delete('/:id', authMiddleware, (req, res) => {
 
 router.post('/renew', (req, res) => {
   try {
-    const { phone, membership_plan, payment_mode, payment_screenshot } = req.body;
+    const { phone, member_id, membership_plan, payment_mode, payment_screenshot } = req.body;
 
-    if (!phone || !membership_plan || !payment_mode) {
-      return res.status(400).json({ error: 'Missing required fields: phone, membership_plan, payment_mode' });
+    if ((!phone && !member_id) || !membership_plan || !payment_mode) {
+      return res.status(400).json({ error: 'Missing required fields: member_id/phone, membership_plan, payment_mode' });
     }
 
     if (!PLAN_AMOUNTS[membership_plan]) {
@@ -317,9 +317,16 @@ router.post('/renew', (req, res) => {
       return res.status(400).json({ error: 'Invalid payment_mode. Must be cash or online' });
     }
 
-    const member = db.prepare('SELECT * FROM members WHERE phone = ?').get(phone);
+    // Lookup member by member_id (preferred) or phone
+    let member;
+    if (member_id) {
+      member = db.prepare('SELECT * FROM members WHERE member_id = ?').get(member_id);
+    } else {
+      member = db.prepare('SELECT * FROM members WHERE phone = ?').get(phone);
+    }
+
     if (!member) {
-      return res.status(404).json({ error: 'No member found with this phone number' });
+      return res.status(404).json({ error: 'No member found with these details' });
     }
 
     const amount = PLAN_AMOUNTS[membership_plan];
@@ -340,14 +347,14 @@ router.post('/renew', (req, res) => {
         fee_submission_date = ?,
         end_date = ?,
         status = 'active'
-      WHERE phone = ?
+      WHERE member_id = ?
     `).run(
       membership_plan, amount, payment_mode, payment_status,
       screenshotPath, registration_date, fee_submission_date,
-      end_date, phone
+      end_date, member.member_id
     );
 
-    const updated = db.prepare('SELECT * FROM members WHERE phone = ?').get(phone);
+    const updated = db.prepare('SELECT * FROM members WHERE member_id = ?').get(member.member_id);
     res.json({ message: 'Membership renewed successfully', member: updated });
   } catch (err) {
     console.error('Error renewing membership:', err.message);
