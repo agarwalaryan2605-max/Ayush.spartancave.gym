@@ -3,7 +3,13 @@ import ExcelJS from 'exceljs';
 import QRCode from 'qrcode';
 import db from '../database/db.js';
 import os from 'os';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { authMiddleware } from '../middleware/auth.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = Router();
 
@@ -106,8 +112,16 @@ router.get('/excel', authMiddleware, async (req, res) => {
 
 // ── GET /api/export/qrcode — Generate QR code for registration page ─────────────
 
-router.get('/qrcode', authMiddleware, async (req, res) => {
+router.get('/qrcode', async (req, res) => {
   try {
+    // If a custom branded QR code image exists, serve it directly
+    const customQrPath = path.join(__dirname, '..', 'public', 'images', 'custom-qr.png');
+    if (fs.existsSync(customQrPath)) {
+      const imageBuffer = fs.readFileSync(customQrPath);
+      const base64Image = `data:image/png;base64,${imageBuffer.toString('base64')}`;
+      return res.json({ qrDataUrl: base64Image, url: 'https://spartan-registration-portal.onrender.com/register.html' });
+    }
+
     const localIp = getLocalIpAddress();
     const port = process.env.PORT || 3000;
     const defaultUrl = `http://${localIp}:${port}/register.html`;
