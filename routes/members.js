@@ -330,8 +330,16 @@ router.post('/renew', (req, res) => {
     }
 
     const amount = PLAN_AMOUNTS[membership_plan];
-    const registration_date = todayDate();
-    const end_date = calculateEndDate(registration_date, membership_plan);
+    const today = todayDate();
+    
+    // If membership is active, stack new duration on current end_date to keep remaining days
+    let baseStartDate = today;
+    if (member.end_date && member.end_date >= today && member.status === 'active') {
+      baseStartDate = member.end_date;
+    }
+
+    const registration_date = today;
+    const end_date = calculateEndDate(baseStartDate, membership_plan);
     const screenshotPath = (payment_mode === 'online' && payment_screenshot) ? payment_screenshot : null;
     const payment_status = payment_mode === 'online' ? 'paid' : 'pending';
     const fee_submission_date = payment_mode === 'online' ? registration_date : null;
