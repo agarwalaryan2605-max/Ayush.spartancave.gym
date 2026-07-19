@@ -163,4 +163,21 @@ router.get('/payment-qr', async (req, res) => {
   }
 });
 
+// ── GET /api/export/database — Download raw SQLite database file ───────────────
+
+router.get('/database', authMiddleware, (req, res) => {
+  try {
+    const dbFilePath = path.join(__dirname, '..', 'database', 'spartan_cave.db');
+    if (!fs.existsSync(dbFilePath)) {
+      return res.status(404).json({ error: 'Database file not found' });
+    }
+    
+    res.setHeader('Content-Type', 'application/x-sqlite3');
+    res.download(dbFilePath, `spartan_cave_backup_${new Date().toISOString().split('T')[0]}.db`);
+  } catch (err) {
+    console.error('Error downloading database file:', err.message);
+    res.status(500).json({ error: 'Failed to download database file' });
+  }
+});
+
 export default router;

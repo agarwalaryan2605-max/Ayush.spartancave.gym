@@ -650,6 +650,20 @@ function exportExcel() {
 }
 
 /* ============================================
+   Backup Database
+   ============================================ */
+function downloadDatabaseBackup() {
+  const token = getToken();
+  const a = document.createElement('a');
+  a.href = `${API_BASE}/export/database?token=${encodeURIComponent(token)}`;
+  a.download = `spartan_cave_backup_${new Date().toISOString().split('T')[0]}.db`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('Downloading database backup file...', 'info');
+}
+
+/* ============================================
    Logout
    ============================================ */
 function handleLogout() {
