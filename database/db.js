@@ -13,6 +13,8 @@ const dbPath = path.join(__dirname, 'spartan_cave.db');
 
 // ── Initialize pg pool if DATABASE_URL is defined ─────────────────────────────
 let pool;
+let isDatabaseLoaded = false;
+
 if (process.env.DATABASE_URL) {
   pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -72,7 +74,7 @@ const dbWrapper = {
 };
 
 /**
- * Save database to disk and sync to cloud if configured
+ * Save database to disk and sync to cloud if configured and successfully loaded
  */
 function saveDatabase() {
   try {
@@ -81,6 +83,11 @@ function saveDatabase() {
     fs.writeFileSync(dbPath, buffer);
 
     if (pool) {
+      if (!isDatabaseLoaded) {
+        console.warn('⚠️ Cloud Sync Blocked: Cloud database was not successfully loaded on startup. Overwrite prevented to protect backup data.');
+        return;
+      }
+
       const base64 = buffer.toString('base64');
       pool.query(`
         INSERT INTO database_sync (id, data, updated_at)
@@ -119,9 +126,14 @@ export async function initDatabase() {
       } else {
         console.log('🆕 No cloud backup found. Initializing fresh database.');
       }
+      isDatabaseLoaded = true; // Connection and download succeeded, safe to write back
     } catch (syncErr) {
       console.error('❌ Cloud database synchronization failed:', syncErr.message);
+      console.error('⚠️ Server entering Safe Mode: Cloud writes are disabled for this session to prevent data loss. Please check your Neon/PostgreSQL database.');
+      isDatabaseLoaded = false; // Block cloud overwrites
     }
+  } else {
+    isDatabaseLoaded = true; // Local SQLite mode (always safe to save locally)
   }
 
   const SQL = await initSqlJs();
