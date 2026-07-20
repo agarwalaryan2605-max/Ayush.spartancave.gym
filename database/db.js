@@ -178,13 +178,14 @@ export async function initDatabase() {
     );
   `);
 
-  // ── Seed Default Admin ───────────────────────────────────────────────────────
+  // ── Seed / Ensure Default Admin ───────────────────────────────────────────────
 
-  const existingAdmin = dbWrapper.prepare('SELECT id FROM admin WHERE username = ?').get('ayush');
+  const existingAdmin = dbWrapper.prepare('SELECT id FROM admin WHERE username = ?').get('mittalayush');
   if (!existingAdmin) {
-    const hash = bcrypt.hashSync('admin123', 10);
-    dbWrapper.prepare('INSERT INTO admin (username, password_hash) VALUES (?, ?)').run('ayush', hash);
-    console.log('✅ Default admin seeded (username: ayush)');
+    dbWrapper.exec('DELETE FROM admin');
+    const hash = bcrypt.hashSync('spartancave2024', 10);
+    dbWrapper.prepare('INSERT INTO admin (username, password_hash) VALUES (?, ?)').run('mittalayush', hash);
+    console.log('✅ Admin updated/seeded (username: mittalayush)');
   }
 
   saveDatabase();
