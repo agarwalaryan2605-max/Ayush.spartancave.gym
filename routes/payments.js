@@ -151,4 +151,27 @@ router.get('/screenshot/:filename', (req, res) => {
   }
 });
 
+// ── POST /api/payments/clear-screenshots — Purge verified screenshots to free space ──
+router.post('/clear-screenshots', authMiddleware, (req, res) => {
+  try {
+    const result = db.prepare("UPDATE members SET payment_screenshot = NULL WHERE payment_status = 'paid' AND payment_screenshot IS NOT NULL").run();
+    res.json({ message: 'Verified payment screenshots cleared successfully', clearedCount: result.changes });
+  } catch (err) {
+    console.error('Error clearing screenshots:', err.message);
+    res.status(500).json({ error: 'Failed to clear payment screenshots' });
+  }
+});
+
+// ── POST /api/payments/clear-screenshot/:memberId — Clear single screenshot ──
+router.post('/clear-screenshot/:memberId', authMiddleware, (req, res) => {
+  try {
+    const { memberId } = req.params;
+    db.prepare("UPDATE members SET payment_screenshot = NULL WHERE member_id = ?").run(memberId);
+    res.json({ message: 'Screenshot cleared for member' });
+  } catch (err) {
+    console.error('Error clearing member screenshot:', err.message);
+    res.status(500).json({ error: 'Failed to clear screenshot' });
+  }
+});
+
 export default router;

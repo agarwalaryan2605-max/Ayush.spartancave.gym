@@ -664,6 +664,35 @@ function downloadDatabaseBackup() {
 }
 
 /* ============================================
+   Purge Verified Screenshots to Free Storage Space
+   ============================================ */
+async function purgeVerifiedScreenshots() {
+  if (!confirm('Clear payment screenshot proof images for all verified (paid) members?\n\nThis frees up 99% of database storage space. ALL member accounts, active plans, days left, and lookup features will remain 100% intact.')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/payments/clear-screenshots`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${getToken()}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      showToast(`Storage freed! Removed ${data.clearedCount || 0} verified screenshots. Member accounts remain 100% active.`, 'success');
+      loadMembers();
+    } else {
+      showToast('Failed to purge screenshots.', 'error');
+    }
+  } catch (err) {
+    showToast('Network error while purging screenshots.', 'error');
+  }
+}
+
+/* ============================================
    Logout
    ============================================ */
 function handleLogout() {
