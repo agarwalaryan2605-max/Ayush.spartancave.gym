@@ -174,4 +174,37 @@ router.post('/clear-screenshot/:memberId', authMiddleware, (req, res) => {
   }
 });
 
+// ── GET /api/payments/screenshots-list — List all members with payment screenshots ──
+router.get('/screenshots-list', authMiddleware, (req, res) => {
+  try {
+    const members = db.prepare(`
+      SELECT member_id, full_name, phone, membership_plan, amount, payment_mode, payment_status, payment_screenshot, registration_date
+      FROM members
+      WHERE payment_screenshot IS NOT NULL AND payment_screenshot != ''
+      ORDER BY id DESC
+    `).all();
+    res.json(members);
+  } catch (err) {
+    console.error('Error fetching screenshots list:', err.message);
+    res.status(500).json({ error: 'Failed to fetch screenshots list' });
+  }
+});
+
+// ── POST /api/payments/delete-selected-screenshots — Bulk delete selected screenshots ──
+router.post('/delete-selected-screenshots', authMiddleware, (req, res) => {
+  try {
+    const { memberIds } = req.body;
+    if (!Array.isArray(memberIds) || memberIds.length === 0) {
+      return res.status(400).json({ error: 'No member IDs provided for deletion' });
+    }
+
+    const placeholders = memberIds.map(() => '?').join(',');
+    const result = db.prepare(`UPDATE members SET payment_screenshot = NULL WHERE member_id IN (${placeholders})`).run(...memberIds);
+    res.json({ message: 'Selected payment screenshots deleted successfully', deletedCount: result.changes });
+  } catch (err) {
+    console.error('Error deleting selected screenshots:', err.message);
+    res.status(500).json({ error: 'Failed to delete selected screenshots' });
+  }
+});
+
 export default router;

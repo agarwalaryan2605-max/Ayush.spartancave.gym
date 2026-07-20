@@ -664,10 +664,182 @@ function downloadDatabaseBackup() {
 }
 
 /* ============================================
-   Purge Verified Screenshots to Free Storage Space
+   Payment Proofs & Storage Manager Modal
    ============================================ */
-async function purgeVerifiedScreenshots() {
-  if (!confirm('Clear payment screenshot proof images for all verified (paid) members?\n\nThis frees up 99% of database storage space. ALL member accounts, active plans, days left, and lookup features will remain 100% intact.')) {
+
+let currentProofsList = [];
+
+async function openPurgeProofsModal() {
+  openModal('purgeProofsModal');
+  const grid = document.getElementById('proofsGalleryGrid');
+  const selectAllCb = document.getElementById('selectAllProofsCheckbox');
+  if (selectAllCb) selectAllCb.checked = false;
+  updateSelectedCountBadge(0);
+
+  grid.innerHTML = `
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">
+      <div class="loading-spinner"></div>
+      <p style="margin-top:12px;">Loading payment proofs...</p>
+    </div>
+  `;
+
+  try {
+    const res = await fetch(`${API_BASE}/payments/screenshots-list`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+
+    if (!res.ok) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:30px;color:#ef4444;">Failed to load payment proofs.</div>`;
+      return;
+    }
+
+    currentProofsList = await res.json();
+    renderProofsGallery(currentProofsList);
+  } catch (err) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:30px;color:#ef4444;">Error loading payment proofs.</div>`;
+  }
+}
+
+function renderProofsGallery(members) {
+  const grid = document.getElementById('proofsGalleryGrid');
+  if (!members || members.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">
+        <i data-lucide="check-circle-2" style="width:48px;height:48px;margin-bottom:12px;opacity:0.4;color:var(--success);"></i>
+        <h4>No Payment Proofs Stored</h4>
+        <p style="font-size:0.85rem;margin-top:4px;">All database storage is optimized! No screenshot files taking up space.</p>
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
+  grid.innerHTML = members.map((m) => {
+    const isPaid = m.payment_status === 'paid';
+    const badgeClass = isPaid ? 'badge-active' : 'badge-expired';
+    const badgeText = isPaid ? 'PAID' : 'PENDING';
+
+    return `
+      <div class="proof-card" style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:10px;position:relative;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
+            <input type="checkbox" class="proof-select-checkbox" data-member-id="${m.member_id}" onchange="onProofCheckboxChange()" style="width:16px;height:16px;accent-color:var(--primary);">
+            <strong style="font-size:0.85rem;font-family:monospace;color:var(--primary);">${m.member_id}</strong>
+          </label>
+          <span class="badge ${badgeClass}" style="font-size:0.7rem;padding:2px 6px;">${badgeText}</span>
+        </div>
+
+        <div style="width:100%;height:160px;background:#000;border-radius:var(--radius);overflow:hidden;position:relative;cursor:pointer;border:1px solid rgba(255,255,255,0.05);" onclick="showProof('${m.payment_screenshot}')">
+          <img src="${m.payment_screenshot}" alt="Proof for ${m.full_name}" style="width:100%;height:100%;object-fit:cover;">
+          <div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.7);padding:2px 6px;border-radius:4px;font-size:0.7rem;color:#fff;">
+            🔍 Click to view
+          </div>
+        </div>
+
+        <div>
+          <div style="font-weight:600;font-size:0.95rem;color:var(--text);">${escapeHtml(m.full_name)}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">${escapeHtml(m.phone)} • ₹${m.amount} (${m.membership_plan})</div>
+        </div>
+
+        <div style="display:flex;gap:6px;margin-top:auto;">
+          <button class="btn btn-outline btn-sm" onclick="shareOrDownloadProof('${m.member_id}', '${escapeHtml(m.full_name)}')" style="flex:1;font-size:0.75rem;padding:4px 8px;">
+            <i data-lucide="share-2" style="width:13px;height:13px;"></i>
+            Share / Save
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="deleteSingleProofFromGallery('${m.member_id}')" style="color:#ef4444;border-color:rgba(239,68,68,0.3);padding:4px 8px;" title="Delete this proof">
+            <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  lucide.createIcons();
+}
+
+function onProofCheckboxChange() {
+  const checkboxes = document.querySelectorAll('.proof-select-checkbox');
+  const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+  updateSelectedCountBadge(checkedCount);
+
+  const selectAllCb = document.getElementById('selectAllProofsCheckbox');
+  if (selectAllCb) {
+    selectAllCb.checked = checkedCount > 0 && checkedCount === checkboxes.length;
+  }
+}
+
+function toggleSelectAllProofs(checked) {
+  const checkboxes = document.querySelectorAll('.proof-select-checkbox');
+  checkboxes.forEach(cb => cb.checked = checked);
+  updateSelectedCountBadge(checked ? checkboxes.length : 0);
+}
+
+function updateSelectedCountBadge(count) {
+  const badge = document.getElementById('selectedCountBadge');
+  if (badge) badge.textContent = `${count} Selected`;
+}
+
+async function deleteSelectedProofs() {
+  const checkboxes = document.querySelectorAll('.proof-select-checkbox:checked');
+  const selectedIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-member-id'));
+
+  if (selectedIds.length === 0) {
+    showToast('Please select at least one proof to delete.', 'error');
+    return;
+  }
+
+  if (!confirm(`Delete ${selectedIds.length} selected payment proof screenshots to free space?\n\nMember accounts and active plans will remain 100% intact.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/payments/delete-selected-screenshots`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${getToken()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ memberIds: selectedIds })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      showToast(`Freed space! Deleted ${data.deletedCount || selectedIds.length} screenshots.`, 'success');
+      openPurgeProofsModal();
+      loadMembers();
+    } else {
+      showToast('Failed to delete selected proofs.', 'error');
+    }
+  } catch (err) {
+    showToast('Network error while deleting proofs.', 'error');
+  }
+}
+
+async function deleteSingleProofFromGallery(memberId) {
+  if (!confirm(`Delete payment screenshot proof for member ${memberId}?\n\nThe member account and days left will remain 100% active.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/payments/clear-screenshot/${encodeURIComponent(memberId)}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+
+    if (res.ok) {
+      showToast(`Proof deleted for ${memberId}. Storage freed!`, 'success');
+      openPurgeProofsModal();
+      loadMembers();
+    } else {
+      showToast('Failed to delete proof.', 'error');
+    }
+  } catch (err) {
+    showToast('Network error.', 'error');
+  }
+}
+
+async function purgeAllVerifiedProofsModal() {
+  if (!confirm('Clear payment screenshots for ALL verified (paid) members?\n\nThis frees 99% of storage space. All member plans and days left stay 100% intact.')) {
     return;
   }
 
@@ -682,7 +854,8 @@ async function purgeVerifiedScreenshots() {
 
     if (res.ok) {
       const data = await res.json();
-      showToast(`Storage freed! Removed ${data.clearedCount || 0} verified screenshots. Member accounts remain 100% active.`, 'success');
+      showToast(`Storage freed! Removed ${data.clearedCount || 0} verified screenshots.`, 'success');
+      openPurgeProofsModal();
       loadMembers();
     } else {
       showToast('Failed to purge screenshots.', 'error');
@@ -690,6 +863,25 @@ async function purgeVerifiedScreenshots() {
   } catch (err) {
     showToast('Network error while purging screenshots.', 'error');
   }
+}
+
+function shareOrDownloadProof(memberId, name) {
+  const member = currentProofsList.find(m => m.member_id === memberId);
+  if (!member || !member.payment_screenshot) {
+    showToast('Screenshot image not found.', 'error');
+    return;
+  }
+
+  const base64Data = member.payment_screenshot;
+  const link = document.createElement('a');
+  link.href = base64Data;
+  const filename = `PaymentProof_${name.replace(/\s+/g, '_')}_${memberId}.png`;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  showToast(`Downloaded ${filename} to share!`, 'info');
 }
 
 /* ============================================

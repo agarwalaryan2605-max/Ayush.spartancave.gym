@@ -91,7 +91,7 @@
             <i data-lucide="database" style="width:16px;height:16px;"></i>
             Backup DB
           </button>
-          <button class="btn btn-outline btn-sm" id="purgeScreenshotsBtn" onclick="purgeVerifiedScreenshots()" title="Clear payment proof images for paid members to free 99% database storage space while keeping member accounts and plans intact">
+          <button class="btn btn-outline btn-sm" id="purgeScreenshotsBtn" onclick="openPurgeProofsModal()" title="View, share, download or delete payment proof images to free 99% database storage space">
             <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
             Purge Proofs (Free Space)
           </button>
@@ -321,6 +321,57 @@
       </div>
       <div class="modal-body" style="text-align:center;padding:10px 0 0 0;">
         <img id="proofModalImage" src="" alt="Payment Screenshot" style="max-width:100%;max-height:70vh;border-radius:var(--radius);border:1px solid var(--border);box-shadow:0 8px 30px rgba(0,0,0,0.5);">
+      </div>
+    </div>
+  </div>
+
+  <!-- Purge Proofs & Storage Gallery Modal -->
+  <div class="modal-overlay" id="purgeProofsModal">
+    <div class="modal-content" style="max-width:850px;width:95%;">
+      <div class="modal-header">
+        <div>
+          <h3 style="display:flex;align-items:center;gap:8px;">
+            <i data-lucide="image" style="width:20px;height:20px;color:var(--primary);"></i>
+            Payment Proofs & Storage Manager
+          </h3>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">Select, share, download, or clear payment proof screenshots to free up database storage.</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('purgeProofsModal')">
+          <i data-lucide="x" style="width:20px;height:20px;"></i>
+        </button>
+      </div>
+      <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+        <!-- Top Toolbar -->
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;background:rgba(255,255,255,0.03);padding:12px 16px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer;user-select:none;">
+              <input type="checkbox" id="selectAllProofsCheckbox" onchange="toggleSelectAllProofs(this.checked)" style="width:16px;height:16px;accent-color:var(--primary);">
+              <strong>Select All</strong>
+            </label>
+            <span id="selectedCountBadge" style="font-size:0.8rem;color:var(--primary);background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:12px;">0 Selected</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" onclick="deleteSelectedProofs()" style="color:#ef4444;border-color:rgba(239,68,68,0.3);">
+              <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+              Delete Selected
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="purgeAllVerifiedProofsModal()">
+              <i data-lucide="sparkles" style="width:14px;height:14px;"></i>
+              Purge All Paid Proofs
+            </button>
+          </div>
+        </div>
+
+        <!-- Gallery Grid -->
+        <div id="proofsGalleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:16px;">
+          <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">
+            <div class="loading-spinner"></div>
+            <p style="margin-top:12px;">Loading payment proofs...</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-sm" onclick="closeModal('purgeProofsModal')">Close</button>
       </div>
     </div>
   </div>
