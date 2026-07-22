@@ -149,7 +149,7 @@ router.get('/payment-qr', async (req, res) => {
       return res.status(400).json({ error: 'A valid amount query parameter is required' });
     }
 
-    const upiUrl = `upi://pay?pa=ayushmittal288@okaxis&pn=${encodeURIComponent('Spartan Cave')}&am=${amount}&cu=INR`;
+    const upiUrl = `upi://pay?pa=ayushmiital66@okicici&pn=${encodeURIComponent('Kratika Agrawal')}&am=${amount}&cu=INR`;
     const qrDataUrl = await QRCode.toDataURL(upiUrl, {
       width: 300,
       margin: 2,
